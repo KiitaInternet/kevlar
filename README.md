@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="og-image.png" alt="KEVLAR — reliability primitives for AI agents that survive real use" width="100%"/>
+</p>
+
 # KEVLAR
 
 [![PyPI](https://img.shields.io/pypi/v/kevlar-agent.svg)](https://pypi.org/project/kevlar-agent/)
