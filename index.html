@@ -8,12 +8,12 @@
 
 <meta property="og:type" content="website" />
 <meta property="og:title" content="KEVLAR — Autonomous Agent Architecture" />
-<meta property="og:description" content="Six reliability patterns extracted from a voice AI assistant that has run continuously in production — not a weekend prototype." />
+<meta property="og:description" content="Six reliability patterns extracted from a voice AI assistant running continuously in production — now shipped as a tested, pip-installable Python library." />
 <meta property="og:url" content="https://kiitainternet.github.io/kevlar/" />
 <meta property="og:image" content="https://kiitainternet.github.io/kevlar/og-image.png" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="KEVLAR — Autonomous Agent Architecture" />
-<meta name="twitter:description" content="Six reliability patterns extracted from a voice AI assistant that has run continuously in production — not a weekend prototype." />
+<meta name="twitter:description" content="Six reliability patterns extracted from a voice AI assistant running continuously in production — now shipped as a tested, pip-installable Python library." />
 <meta name="twitter:image" content="https://kiitainternet.github.io/kevlar/og-image.png" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,6 +54,15 @@
   ::selection { background: var(--cyan-dim); color: var(--text); }
 
   a { color: var(--cyan); }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: rgba(77, 227, 255, 0.1);
+    color: var(--cyan);
+    padding: 0.15em 0.45em;
+    border-radius: 3px;
+  }
 
   .noise-overlay {
     position: fixed;
@@ -504,10 +513,11 @@
   <div class="nav-mark">KEVLAR<span>_</span></div>
   <div class="nav-links">
     <a href="#patterns">Patterns</a>
+    <a href="#library">Library</a>
     <a href="#reliability">Reliability</a>
     <a href="#architecture">Architecture</a>
   </div>
-  <a class="nav-cta" href="https://github.com/KiitaInternet/kevlar" id="repo-link">View Source</a>
+  <a class="nav-cta" href="https://pypi.org/project/kevlar-agent/" id="pypi-link" target="_blank" rel="noopener">pip install kevlar-agent</a>
 </nav>
 
 <section class="hero">
@@ -521,6 +531,9 @@
       <a class="btn-primary" href="#patterns">Explore the patterns ↓</a>
       <a class="btn-secondary" href="https://github.com/KiitaInternet/kevlar" id="repo-link-2">GitHub</a>
     </div>
+    <p style="margin: 22px 0 0; font-family: var(--font-mono); font-size: 13px; color: var(--text-faint);">
+      Now shipped as a library → <code>pip install kevlar-agent</code>
+    </p>
   </div>
 </section>
 
@@ -573,6 +586,41 @@
         <h3>Self-Supervising Watchdog</h3>
         <p>A lightweight external process checks that every core service is alive on a fixed interval and restarts what isn't — independent of the services it watches, so one crash can't take down its own recovery mechanism.</p>
         <div class="origin"><b>Root cause:</b> a process that only restarts itself can't restart itself after it's dead.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="library">
+  <div class="section-inner">
+    <div class="terminal-wrap">
+      <div class="terminal-desc">
+        <div class="section-kicker">Now Installable</div>
+        <h2 class="section-title">Every pattern above,<br>as a real package.</h2>
+        <p class="section-lede" style="margin-bottom: 0;">These six patterns aren't just documented on this page — they're shipped as <code>kevlar-agent</code>, a tested, zero-dependency Python library. Drop them into your own agent today.</p>
+        <ul class="checklist">
+          <li><span class="mark">›</span> <code>dedupe</code>, <code>budget_guard</code>, <code>require_confirmation</code>, <code>silent</code>, <code>AuditLog</code>, <code>Watchdog</code></li>
+          <li><span class="mark">›</span> 24 tests, zero required dependencies</li>
+          <li><span class="mark">›</span> MIT licensed, published on PyPI</li>
+        </ul>
+        <div class="hero-actions" style="margin-top: 32px;">
+          <a class="btn-primary" href="https://pypi.org/project/kevlar-agent/" target="_blank" rel="noopener">View on PyPI ↗</a>
+          <a class="btn-secondary" href="https://github.com/KiitaInternet/kevlar/blob/main/PACKAGE_README.md" target="_blank" rel="noopener">Read the docs</a>
+        </div>
+      </div>
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <span class="title">pip install kevlar-agent</span>
+        </div>
+        <div class="terminal-body">
+          <div class="ln">$ pip install kevlar-agent</div>
+          <div class="dim">Successfully installed kevlar-agent-0.1.0</div>
+          <br>
+          <div class="ln">&gt;&gt;&gt; from kevlar_agent import silent, SilentTimeout</div>
+          <div class="ln">&gt;&gt;&gt; silent(refresh_oauth_token, timeout_seconds=15)</div>
+          <div class="ok">✓ returns fast, or raises SilentTimeout — never hangs<span class="cursor"></span></div>
+        </div>
       </div>
     </div>
   </div>
