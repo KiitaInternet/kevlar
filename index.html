@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AXIOM — Autonomous Agent Architecture</title>
+<meta name="description" content="A production-hardened framework for building voice-driven AI agents that survive real-world use: dedupe, budget guards, self-healing, and full audit trails." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070a10;
+    --bg-raised: #0d121b;
+    --bg-panel: #101827;
+    --line: #1e2a3d;
+    --line-bright: #2f4260;
+    --cyan: #4de3ff;
+    --cyan-dim: #1c5a70;
+    --gold: #ffb92e;
+    --text: #e6f1f7;
+    --text-dim: #8ba0b8;
+    --text-faint: #536178;
+    --danger: #ff5d6c;
+    --good: #4dffa0;
+    --font-display: 'Orbitron', 'Rajdhani', sans-serif;
+    --font-hud: 'Rajdhani', sans-serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--cyan-dim); color: var(--text); }
+
+  a { color: var(--cyan); }
+
+  .noise-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .scanline {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 99;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(77, 227, 255, 0.015) 0px,
+      rgba(77, 227, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px clamp(20px, 5vw, 64px);
+    background: linear-gradient(to bottom, rgba(7,10,16,0.92), transparent);
+  }
+  .nav-mark {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: 0.18em;
+    color: var(--text);
+  }
+  .nav-mark span { color: var(--cyan); }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    font-family: var(--font-hud);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .nav-links a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--cyan); }
+  .nav-cta {
+    border: 1px solid var(--line-bright);
+    padding: 8px 18px;
+    border-radius: 2px;
+    font-family: var(--font-hud);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    text-decoration: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-cta:hover { background: var(--cyan); color: var(--bg); border-color: var(--cyan); }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 140px 24px 80px;
+  }
+
+  .hero-grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(77, 227, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to right, rgba(77, 227, 255, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 75%);
+  }
+
+  #hud-canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -52%);
+    width: min(720px, 88vw);
+    height: min(720px, 88vw);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 900px;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    padding: 6px 14px;
+    border: 1px solid var(--cyan-dim);
+    border-radius: 20px;
+    background: rgba(77, 227, 255, 0.05);
+  }
+  .hero-eyebrow::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--good);
+    box-shadow: 0 0 8px var(--good);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(44px, 8vw, 96px);
+    line-height: 0.98;
+    letter-spacing: 0.01em;
+    margin: 0 0 22px;
+    text-wrap: balance;
+    background: linear-gradient(180deg, #ffffff 0%, #b9d8e8 60%, var(--cyan) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 60px rgba(77, 227, 255, 0.25);
+  }
+
+  .hero p.lede {
+    font-family: var(--font-body);
+    font-size: clamp(16px, 2.1vw, 19px);
+    color: var(--text-dim);
+    max-width: 620px;
+    margin: 0 auto 40px;
+    text-wrap: balance;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary, .btn-secondary {
+    font-family: var(--font-hud);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 14px 30px;
+    border-radius: 2px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--cyan);
+    color: #04141c;
+    box-shadow: 0 0 24px rgba(77, 227, 255, 0.35);
+  }
+  .btn-primary:hover { background: #7cebff; box-shadow: 0 0 36px rgba(77, 227, 255, 0.55); transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--line-bright);
+  }
+  .btn-secondary:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  .hero-stats {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    max-width: 880px;
+    margin: 72px auto 0;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .stat {
+    background: var(--bg);
+    padding: 22px 12px;
+    text-align: center;
+  }
+  .stat .num {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(22px, 3vw, 32px);
+    color: var(--cyan);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat .label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-top: 6px;
+  }
+
+  /* ---------- Section shell ---------- */
+  section { position: relative; padding: 120px clamp(20px, 6vw, 64px); }
+  .section-inner { max-width: 1140px; margin: 0 auto; }
+
+  .section-kicker {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .section-kicker::before { content: '// '; color: var(--text-faint); }
+
+  h2.section-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 44px);
+    letter-spacing: 0.01em;
+    margin: 0 0 18px;
+    text-wrap: balance;
+    color: var(--text);
+  }
+
+  .section-lede {
+    font-size: 17px;
+    color: var(--text-dim);
+    max-width: 640px;
+    margin-bottom: 64px;
+  }
+
+  /* ---------- Pattern cards ---------- */
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .pattern-card {
+    background: var(--bg-raised);
+    padding: 32px 28px;
+    transition: background 0.25s;
+  }
+  .pattern-card:hover { background: var(--bg-panel); }
+  .pattern-icon {
+    width: 40px; height: 40px;
+    border: 1px solid var(--cyan-dim);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cyan);
+    margin-bottom: 20px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+  }
+  .pattern-card h3 {
+    font-family: var(--font-hud);
+    font-weight: 700;
+    font-size: 19px;
+    margin: 0 0 10px;
+    color: var(--text);
+  }
+  .pattern-card p {
+    font-size: 14.5px;
+    color: var(--text-dim);
+    margin: 0 0 16px;
+  }
+  .pattern-card .origin {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+    line-height: 1.55;
+  }
+  .pattern-card .origin b { color: var(--danger); font-weight: 500; }
+
+  /* ---------- Terminal ---------- */
+  .terminal-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+  @media (max-width: 860px) { .terminal-wrap { grid-template-columns: 1fr; } }
+
+  .terminal {
+    background: #05070c;
+    border: 1px solid var(--line-bright);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(77, 227, 255, 0.08), 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--line);
+  }
+  .terminal-bar .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .terminal-bar .dot:nth-child(1) { background: #ff5f57; }
+  .terminal-bar .dot:nth-child(2) { background: #febc2e; }
+  .terminal-bar .dot:nth-child(3) { background: #28c840; }
+  .terminal-bar span.title {
+    margin-left: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .terminal-body {
+    padding: 22px 20px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.85;
+    min-height: 340px;
+  }
+  .terminal-body .ln { color: var(--text-dim); }
+  .terminal-body .ok { color: var(--good); }
+  .terminal-body .warn { color: var(--gold); }
+  .terminal-body .err { color: var(--danger); }
+  .terminal-body .dim { color: var(--text-faint); }
+  .terminal-body .cursor {
+    display: inline-block;
+    width: 7px; height: 14px;
+    background: var(--cyan);
+    animation: blink 1s step-end infinite;
+    vertical-align: -2px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .terminal-desc h2 { margin-top: 0; }
+  .checklist { list-style: none; padding: 0; margin: 28px 0 0; }
+  .checklist li {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+    font-size: 14.5px;
+    color: var(--text-dim);
+  }
+  .checklist li:first-child { border-top: none; }
+  .checklist .mark { color: var(--good); font-family: var(--font-mono); flex-shrink: 0; }
+
+  /* ---------- Architecture diagram ---------- */
+  .arch-diagram {
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: clamp(24px, 4vw, 48px);
+  }
+  .arch-row {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .arch-node {
+    flex: 1;
+    min-width: 150px;
+    background: var(--bg-panel);
+    border: 1px solid var(--line-bright);
+    border-radius: 8px;
+    padding: 18px 16px;
+    text-align: center;
+    position: relative;
+  }
+  .arch-node .tag {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--cyan);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .arch-node .name {
+    font-family: var(--font-hud);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .arch-node.core { border-color: var(--cyan); box-shadow: 0 0 24px rgba(77,227,255,0.15); }
+  .arch-arrow-down {
+    display: flex; justify-content: center;
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    margin: 6px 0;
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    padding: 60px clamp(20px, 6vw, 64px) 48px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+  }
+  footer .foot-mark {
+    font-family: var(--font-display);
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    font-size: 16px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+  footer .foot-mark span { color: var(--cyan); }
+  footer p {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-faint);
+    margin: 4px 0;
+  }
+
+  @media (max-width: 760px) {
+    .pattern-grid, .hero-stats { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="noise-overlay"></div>
+<div class="scanline"></div>
+
+<nav>
+  <div class="nav-mark">AXIOM<span>_</span></div>
+  <div class="nav-links">
+    <a href="#patterns">Patterns</a>
+    <a href="#reliability">Reliability</a>
+    <a href="#architecture">Architecture</a>
+  </div>
+  <a class="nav-cta" href="#" id="repo-link">View Source</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid-bg"></div>
+  <canvas id="hud-canvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Live reference implementation · 240+ tool calls in production</div>
+    <h1>An agent framework<br>built to survive contact<br>with the real world.</h1>
+    <p class="lede">Most agent frameworks are optimized for the demo. AXIOM is a set of patterns — deduplication, budget guards, silent-auth recovery, self-healing supervision — extracted from a voice assistant that has run continuously in production, not a weekend prototype.</p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="#patterns">Explore the patterns ↓</a>
+      <a class="btn-secondary" href="#" id="repo-link-2">GitHub</a>
+    </div>
+  </div>
+</section>
+
+<div class="hero-stats">
+  <div class="stat"><div class="num">240+</div><div class="label">Orchestrated Tools</div></div>
+  <div class="stat"><div class="num">24/7</div><div class="label">Continuous Runtime</div></div>
+  <div class="stat"><div class="num">5</div><div class="label">Channels · One Core</div></div>
+  <div class="stat"><div class="num">0</div><div class="label">Silent Failures Tolerated</div></div>
+</div>
+
+<section id="patterns">
+  <div class="section-inner">
+    <div class="section-kicker">Battle-Tested Patterns</div>
+    <h2 class="section-title">Reliability isn't a feature.<br>It's what's left after things break.</h2>
+    <p class="section-lede">Every pattern below exists because something failed first in a live system, with a live user on the other end. Here's what actually holds an always-on agent together.</p>
+
+    <div class="pattern-grid">
+      <div class="pattern-card">
+        <div class="pattern-icon">01</div>
+        <h3>Silent-Auth Recovery</h3>
+        <p>OAuth flows that try to open a browser and wait for a human click will hang forever when called from an unattended background thread. Every credentialed call gets a <code>silent</code> mode that fails fast and reports instead of blocking.</p>
+        <div class="origin"><b>Root cause:</b> a scheduled task called a service helper that assumed a human was watching. It wasn't. The task hung silently for hours.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">02</div>
+        <h3>Duplicate-Call Suppression</h3>
+        <p>A model can emit the same tool call twice in one turn — once from an eager first pass, once from a retry. A short time-windowed dedupe key (tool + args) absorbs the echo without touching the real side effect twice.</p>
+        <div class="origin"><b>Root cause:</b> two rapid duplicate calls to a "launch session" endpoint spun up two concurrent audio sessions on the same device.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">03</div>
+        <h3>Per-Feature Budget Guards</h3>
+        <p>Every paid API call sits behind a monthly spend ceiling tracked independently per feature, not per account. A runaway loop in one capability can't drain the budget of every other capability sharing the same key.</p>
+        <div class="origin"><b>Root cause:</b> two features shared one provider key with no isolation; a spike in one silently starved the other of quota mid-conversation.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">04</div>
+        <h3>Confirmation as Code, Not Prompt</h3>
+        <p>Irreversible actions require an explicit <code>confirmed=true</code> flag enforced in the dispatch layer — not a polite instruction in the system prompt. A model misreading intent once is not an acceptable failure mode for money or publishing.</p>
+        <div class="origin"><b>Root cause:</b> prompt-only guardrails are a suggestion the model can miss. Code-level gates aren't.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">05</div>
+        <h3>Full-Fidelity Audit Trail</h3>
+        <p>Every tool invocation — args, result, error, latency, and calling channel — is appended to a structured log. Not for compliance theater: it's the dataset that reveals which capabilities are actually used, and which ones quietly fail.</p>
+        <div class="origin"><b>Root cause:</b> without a trail, "it worked when I tested it" is the only signal you have. That signal lies.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">06</div>
+        <h3>Self-Supervising Watchdog</h3>
+        <p>A lightweight external process checks that every core service is alive on a fixed interval and restarts what isn't — independent of the services it watches, so one crash can't take down its own recovery mechanism.</p>
+        <div class="origin"><b>Root cause:</b> a process that only restarts itself can't restart itself after it's dead.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="reliability">
+  <div class="section-inner">
+    <div class="terminal-wrap">
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <span class="title">self_check.py — daily 05:30</span>
+        </div>
+        <div class="terminal-body" id="term-body"></div>
+      </div>
+      <div class="terminal-desc">
+        <div class="section-kicker">Nightly Self-Audit</div>
+        <h2 class="section-title">The agent checks its own pulse<br>before you have to.</h2>
+        <p class="section-lede" style="margin-bottom: 0;">A scheduled health pass exercises the real code paths — not just "did it import" — and only speaks up when something is actually wrong.</p>
+        <ul class="checklist">
+          <li><span class="mark">›</span> Background services verified alive via process inspection, not assumption</li>
+          <li><span class="mark">›</span> Every credentialed integration exercised in silent mode with a hard timeout</li>
+          <li><span class="mark">›</span> Tool schema integrity checked across every calling surface</li>
+          <li><span class="mark">›</span> Silent when healthy — a notification only fires when something needs attention</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="architecture">
+  <div class="section-inner">
+    <div class="section-kicker">System Shape</div>
+    <h2 class="section-title">One dispatch core.<br>Five very different front doors.</h2>
+    <p class="section-lede">Voice, chat, and messaging channels all route through the same audited, budget-guarded dispatch layer — so a capability built once is trustworthy everywhere it's exposed, and every channel inherits the same safety rails automatically.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-row">
+        <div class="arch-node"><span class="tag">Realtime</span><span class="name">Voice Session</span></div>
+        <div class="arch-node"><span class="tag">Chat</span><span class="name">Mobile Agent</span></div>
+        <div class="arch-node"><span class="tag">Messaging</span><span class="name">Telegram</span></div>
+        <div class="arch-node"><span class="tag">Messaging</span><span class="name">Discord</span></div>
+        <div class="arch-node"><span class="tag">Telephony</span><span class="name">Phone / SMS</span></div>
+      </div>
+      <div class="arch-arrow-down">▼ ▼ ▼ ▼ ▼</div>
+      <div class="arch-row">
+        <div class="arch-node core" style="flex: 1 1 100%;">
+          <span class="tag">Shared Core</span>
+          <span class="name">Dispatch · Dedupe · Budget Guard · Audit Log · Confirmation Gate</span>
+        </div>
+      </div>
+      <div class="arch-arrow-down">▼</div>
+      <div class="arch-row">
+        <div class="arch-node"><span class="tag">Capability</span><span class="name">Calendar / Email</span></div>
+        <div class="arch-node"><span class="tag">Capability</span><span class="name">Finance / Ops</span></div>
+        <div class="arch-node"><span class="tag">Capability</span><span class="name">Content / Media</span></div>
+        <div class="arch-node"><span class="tag">Capability</span><span class="name">Home / Device</span></div>
+        <div class="arch-node"><span class="tag">Capability</span><span class="name">240+ more…</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-mark">AXIOM<span>_</span></div>
+  <p>An architecture case study. Built from a real, continuously-running voice assistant.</p>
+  <p>© 2026 — MIT Licensed</p>
+</footer>
+
+<script>
+// ---------- HUD canvas: original design, hand-authored, no external assets ----------
+const canvas = document.getElementById('hud-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, DPR;
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = canvas.getBoundingClientRect();
+  W = rect.width; H = rect.height;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+const cx = () => W / 2;
+const cy = () => H / 2;
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const rings = [
+  { r: 0.30, speed: 0.35, dash: [2, 14], width: 1, dir: 1, opacity: 0.55 },
+  { r: 0.38, speed: -0.22, dash: [18, 10], width: 1.5, dir: -1, opacity: 0.4 },
+  { r: 0.46, speed: 0.14, dash: [1, 6], width: 1, dir: 1, opacity: 0.3 },
+];
+
+const ticks = 72;
+const particles = Array.from({ length: 28 }, () => ({
+  angle: Math.random() * Math.PI * 2,
+  radius: 0.20 + Math.random() * 0.24,
+  speed: (0.1 + Math.random() * 0.3) * (Math.random() < 0.5 ? 1 : -1),
+  size: 0.6 + Math.random() * 1.6,
+  phase: Math.random() * Math.PI * 2,
+}));
+
+let t = 0;
+
+function drawRing(radiusFrac, rotation, dash, width, opacity, color) {
+  const r = Math.min(W, H) * radiusFrac;
+  ctx.save();
+  ctx.translate(cx(), cy());
+  ctx.rotate(rotation);
+  ctx.setLineDash(dash);
+  ctx.lineWidth = width;
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = opacity;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCore() {
+  const r = Math.min(W, H) * 0.12;
+  const pulse = 1 + Math.sin(t * 1.4) * 0.04;
+  const grad = ctx.createRadialGradient(cx(), cy(), 0, cx(), cy(), r * pulse * 2.2);
+  grad.addColorStop(0, 'rgba(77, 227, 255, 0.55)');
+  grad.addColorStop(0.4, 'rgba(77, 227, 255, 0.14)');
+  grad.addColorStop(1, 'rgba(77, 227, 255, 0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx(), cy(), r * pulse * 2.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(cx(), cy(), r * pulse, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(230, 241, 247, 0.9)';
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx(), cy(), r * pulse * 0.55, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  ctx.fill();
+}
+
+function drawTicks() {
+  const rOuter = Math.min(W, H) * 0.485;
+  const rInner = Math.min(W, H) * 0.465;
+  ctx.save();
+  ctx.translate(cx(), cy());
+  for (let i = 0; i < ticks; i++) {
+    const a = (i / ticks) * Math.PI * 2 + t * 0.05;
+    const major = i % 6 === 0;
+    const rI = major ? rInner - 8 : rInner;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * rI, Math.sin(a) * rI);
+    ctx.lineTo(Math.cos(a) * rOuter, Math.sin(a) * rOuter);
+    ctx.strokeStyle = major ? 'rgba(255,185,46,0.55)' : 'rgba(77,227,255,0.28)';
+    ctx.lineWidth = major ? 1.6 : 1;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawParticles() {
+  const scale = Math.min(W, H);
+  particles.forEach(p => {
+    const a = p.angle + t * p.speed;
+    const wob = Math.sin(t * 2 + p.phase) * 0.01;
+    const r = (p.radius + wob) * scale;
+    const x = cx() + Math.cos(a) * r;
+    const y = cy() + Math.sin(a) * r;
+    const twinkle = 0.4 + Math.sin(t * 3 + p.phase) * 0.35;
+    ctx.beginPath();
+    ctx.arc(x, y, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(77, 227, 255, ${Math.max(0.15, twinkle)})`;
+    ctx.fill();
+  });
+}
+
+function drawScanSweep() {
+  const r = Math.min(W, H) * 0.485;
+  const angle = t * 0.6;
+  const grad = ctx.createConicGradient ? ctx.createConicGradient(angle - Math.PI / 2, cx(), cy()) : null;
+  ctx.save();
+  ctx.translate(cx(), cy());
+  ctx.rotate(angle);
+  const sweepGrad = ctx.createLinearGradient(0, 0, r, 0);
+  sweepGrad.addColorStop(0, 'rgba(77,227,255,0.22)');
+  sweepGrad.addColorStop(1, 'rgba(77,227,255,0)');
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.arc(0, 0, r, -0.18, 0.18);
+  ctx.closePath();
+  ctx.fillStyle = sweepGrad;
+  ctx.fill();
+  ctx.restore();
+}
+
+function frame() {
+  ctx.clearRect(0, 0, W, H);
+  drawTicks();
+  drawScanSweep();
+  rings.forEach(ring => drawRing(ring.r, t * ring.speed * ring.dir, ring.dash, ring.width, ring.opacity, '#4de3ff'));
+  drawParticles();
+  drawCore();
+  t += reduceMotion ? 0 : 0.012;
+  requestAnimationFrame(frame);
+}
+frame();
+
+// ---------- Terminal typing sequence ----------
+const lines = [
+  { t: 'ln', text: '$ python run_self_test_and_report.py' },
+  { t: 'dim', text: '' },
+  { t: 'ok', text: '✔ background services ................ 4/4 alive' },
+  { t: 'ok', text: '✔ silent-auth channels ................ 4/4 responsive' },
+  { t: 'ok', text: '✔ tool schema integrity ............... 240 tools, 0 collisions' },
+  { t: 'ok', text: '✔ shared-memory backend ............... reachable' },
+  { t: 'ok', text: '✔ webhook endpoint ..................... 200 OK' },
+  { t: 'dim', text: '' },
+  { t: 'warn', text: '— last week: caught a duplicate-launch race' },
+  { t: 'warn', text: '  before it shipped a second live session' },
+  { t: 'dim', text: '' },
+  { t: 'ok', text: 'all systems nominal. staying quiet.' },
+];
+
+const termBody = document.getElementById('term-body');
+let lineIndex = 0;
+
+function typeNextLine() {
+  if (lineIndex >= lines.length) {
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    termBody.appendChild(cursor);
+    return;
+  }
+  const { t: cls, text } = lines[lineIndex];
+  const row = document.createElement('div');
+  row.className = cls;
+  termBody.appendChild(row);
+
+  if (text === '') {
+    lineIndex++;
+    setTimeout(typeNextLine, 120);
+    return;
+  }
+
+  let charIndex = 0;
+  const speed = reduceMotion ? 0 : 10;
+  function typeChar() {
+    row.textContent = text.slice(0, charIndex);
+    charIndex++;
+    if (charIndex <= text.length) {
+      setTimeout(typeChar, speed);
+    } else {
+      lineIndex++;
+      setTimeout(typeNextLine, 90);
+    }
+  }
+  typeChar();
+}
+
+const termObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      typeNextLine();
+      termObserver.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+termObserver.observe(document.getElementById('term-body'));
+</script>
+
+</body>
+</html>
