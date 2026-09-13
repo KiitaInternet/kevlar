@@ -1,5 +1,10 @@
 # KEVLAR
 
+[![PyPI](https://img.shields.io/pypi/v/kevlar-agent.svg)](https://pypi.org/project/kevlar-agent/)
+[![Tests](https://github.com/KiitaInternet/kevlar/actions/workflows/tests.yml/badge.svg)](https://github.com/KiitaInternet/kevlar/actions/workflows/tests.yml)
+[![Python versions](https://img.shields.io/pypi/pyversions/kevlar-agent.svg)](https://pypi.org/project/kevlar-agent/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 **A case study in what it actually takes to keep a voice-driven AI agent running, unattended, for months.**
 
 Most agent frameworks optimize for the demo: wire up a tool, watch it call an API, ship it. KEVLAR is the opposite kind of artifact — a single-page write-up of the reliability patterns that only show up after an agent has been left running against real usage, real API quotas, and real unattended background jobs long enough for the unglamorous failure modes to surface.
