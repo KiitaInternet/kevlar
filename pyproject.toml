@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kevlar-agent"
+version = "0.1.0"
+description = "Reliability primitives for AI agents that have to survive real use: dedupe, budget guards, silent-timeout, audit trails, confirmation gates, and a self-supervising watchdog."
+readme = "PACKAGE_README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "KiitaInternet" }]
+keywords = ["ai", "agent", "reliability", "llm", "tool-calling", "watchdog", "production"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = []
+
+[project.optional-dependencies]
+watchdog = ["psutil>=5.9"]
+dev = ["pytest>=7.0", "psutil>=5.9"]
+
+[project.urls]
+Homepage = "https://kiitainternet.github.io/kevlar/"
+Repository = "https://github.com/KiitaInternet/kevlar"
+
+[tool.setuptools]
+packages = ["kevlar_agent"]

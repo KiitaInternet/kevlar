@@ -4,7 +4,7 @@
 
 Most agent frameworks optimize for the demo: wire up a tool, watch it call an API, ship it. KEVLAR is the opposite kind of artifact — a single-page write-up of the reliability patterns that only show up after an agent has been left running against real usage, real API quotas, and real unattended background jobs long enough for the unglamorous failure modes to surface.
 
-**[Live page →](./index.html)** (open locally, or host on GitHub Pages / Netlify / Vercel — it's a single static file, zero build step)
+**[Live case study →](https://kiitainternet.github.io/kevlar/)** · **[`pip install kevlar-agent`](./PACKAGE_README.md)** — the six patterns below, as a real, tested, installable library.
 
 ## Why this exists
 
@@ -27,7 +27,19 @@ A single self-contained `index.html` — no build step, no dependencies, no fram
 
 ## Stack
 
-Plain HTML/CSS/JS. Google Fonts (Orbitron, Rajdhani, IBM Plex Sans, JetBrains Mono) for type. No frameworks, no bundler, no build step — intentionally, so anyone can read the entire implementation top to bottom in one file.
+**The case study page**: plain HTML/CSS/JS, Google Fonts (Orbitron, Rajdhani, IBM Plex Sans, JetBrains Mono). No frameworks, no bundler, no build step — intentionally, so anyone can read the entire implementation top to bottom in one file.
+
+**The library** (`kevlar_agent/`): zero-dependency Python (one optional dependency, `psutil`, for the watchdog's default liveness check). 24 tests, all passing — see [PACKAGE_README.md](./PACKAGE_README.md) for usage.
+
+```bash
+pip install kevlar-agent
+```
+
+```bash
+# to run the test suite yourself
+pip install -e ".[dev]"
+pytest
+```
 
 ## License
 

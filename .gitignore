@@ -1,3 +1,13 @@
 .DS_Store
 Thumbs.db
 .claude/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.kevlar_budget.json
+build/
+dist/
+*.egg
