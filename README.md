@@ -1,8 +1,8 @@
-# AXIOM
+# KEVLAR
 
 **A case study in what it actually takes to keep a voice-driven AI agent running, unattended, for months.**
 
-Most agent frameworks optimize for the demo: wire up a tool, watch it call an API, ship it. AXIOM is the opposite kind of artifact — a single-page write-up of the reliability patterns that only show up after an agent has been left running against real usage, real API quotas, and real unattended background jobs long enough for the unglamorous failure modes to surface.
+Most agent frameworks optimize for the demo: wire up a tool, watch it call an API, ship it. KEVLAR is the opposite kind of artifact — a single-page write-up of the reliability patterns that only show up after an agent has been left running against real usage, real API quotas, and real unattended background jobs long enough for the unglamorous failure modes to surface.
 
 **[Live page →](./index.html)** (open locally, or host on GitHub Pages / Netlify / Vercel — it's a single static file, zero build step)
 
