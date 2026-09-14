@@ -8,6 +8,7 @@
 [![Tests](https://github.com/KiitaInternet/kevlar/actions/workflows/tests.yml/badge.svg)](https://github.com/KiitaInternet/kevlar/actions/workflows/tests.yml)
 [![Python versions](https://img.shields.io/pypi/pyversions/kevlar-agent.svg)](https://pypi.org/project/kevlar-agent/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kiita1302)
 
 **A case study in what it actually takes to keep a voice-driven AI agent running, unattended, for months.**
 
@@ -49,6 +50,10 @@ pip install kevlar-agent
 pip install -e ".[dev]"
 pytest
 ```
+
+## Support
+
+If this saved you a debugging session, a [tip on Ko-fi](https://ko-fi.com/kiita1302) or a [GitHub Sponsor](https://github.com/sponsors/KiitaInternet) goes a long way — both entirely optional.
 
 ## License
 
